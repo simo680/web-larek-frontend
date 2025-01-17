@@ -81,7 +81,7 @@ interface ICart {
 Интерфейс для модели данных корзины
 
 ```
-export interface ICartData {
+interface ICartData {
   cart: ICart[];
 }
 ```
