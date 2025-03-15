@@ -53,36 +53,31 @@ yarn build
 interface ICard {
 	id: string;
 	description?: string;
-	image: string;
+	image?: string;
 	title: string;
 	category: string;
-	price: number;
+	price: number | null;
 }
 ```
 
-Интерфейс для модели данных товаров
+Интерфейс для модели данных
 
 ```
-interface ICardsData {
-  cards: ICard[];
+ interface IAppState {
+	catalog: ICard[];
+	basket: string[];
+	preview: string | null;
+	order: IOrder | null;
 }
 ```
 
-Интерфейс товара в корзине
+Интерфейс определяет структуру данных для отображения корзины на странице.
 
 ```
-interface ICart {
-  product: ICard;
-  id: string;
-  total: number;
-}
-```
-
-Интерфейс для модели данных корзины
-
-```
-interface ICartData {
-  cart: ICart[];
+interface IBasketView {
+	items: HTMLElement[];
+	total: number;
+	selected: string[];
 }
 ```
 
@@ -99,15 +94,33 @@ interface IContactsForm {
 
 ```
 IPaymentForm {
-  payment: TPayment;
+  payment: string;
   adress: string;
 }
 ```
 
-Тип, описывающий возможные способы оплаты
+Интерфейс содержащий данные заказа, включая контактную информацию, способ оплаты и адрес доставки, а также общую сумму и список товаров.
 
 ```
-export type TPayment = 'card' | 'cash' | undefined;
+interface IOrder extends IContactsForm, IOrderForm {
+	total: number;
+	items: string[];
+}
+```
+
+Интерфейс с описанием структуры данных для ответа от API после оформления заказа.
+
+```
+interface IOrderResult {
+  id: string;
+  total: number;
+}
+```
+
+Тип для хранения ошибок в формах заказа и контактных данных.
+
+```
+type FormErrors = Partial<Record<keyof IOrder, string>>;
 ```
 
 ## Архитектура приложения
@@ -181,39 +194,23 @@ export type TPayment = 'card' | 'cash' | undefined;
 - **`Subscriber`**: Подписчик на событие, представленный функцией.
 - **`EmitterEvent`**: Событие с данными, содержащими имя события и саму информацию.
 
-### Слой модель
+### Слой модель данных
 
-#### Класс CardsData
+#### Model
+
+
+
+#### Класс AppState
 
 Класс отвечает за хранение и логику работы с данными
-
-В полях класса хранятся следующие данные:
-
-- \_cards: ICard[];
-
-Так же класс предоставляет набор методов для взаимодействия с этими данными.
-
-- setCards(cards: ICard[]): void;
-- getCard(id: string): ICard | undefined; - возвращает карточку по её id
-
-### Класс CartData
-
-Класс отвечает за хранение и логику работы с корзиной.
-
-В полях класса хранятся следующие данные:
-
-- \_cart: ICart[] - массив объектов, представляющих товары в корзине.
-
-Класс предоставляет следующие методы:
-
-- addProduct(id: string): void - добавляет товар в корзину по идентификатору.
-- removeProduct(id: string): void - удаляет товар из корзины по идентификатору.
-- getProduct(): ICard[] - возвращает массив товаров, добавленных в корзину.
-- clearCart(): void - очищает корзину.
 
 ### Слой представления
 
 Все классы представления отвечают за отображение внутри контейнера (DOM - элемент) передаваемых в них данных.
+
+
+
+
 
 #### Класс Modal
 
@@ -241,6 +238,14 @@ export type TPayment = 'card' | 'cash' | undefined;
 - set isLocked(value: boolean) - блокирует или разблокирует страницу.
 - set counter(value: number) - обновляет счетчик товаров в корзине.
 
+#### Класс Success
+
+#### Класс Card
+
+#### Класс Page
+
+#### Basket
+
 #### Класс ContactsForm
 
 Класс реализует работу с формой контактов
@@ -254,8 +259,6 @@ export type TPayment = 'card' | 'cash' | undefined;
 
 - set phone(value: string) - устанавливает имя.
 - set email(value: string) - устанавливает email.
-- get phone(): string - возвращает имя.
-- get email(): string - возвращает email.
 
 #### Классс PaymentForm
 
@@ -270,9 +273,7 @@ export type TPayment = 'card' | 'cash' | undefined;
 Так же класс предоставляет набор методов для взаимодействия с этими данными.
 
 - set adress(value: string) - устанавливает адрес доставки.
-- set Payment(value: TPayment) - устанавливает способ оплаты.
-- get adress(): string - возвращает адрес доставки.
-- get Payment(): TPayment - возвращает способ оплаты.
+- set payment(value: TPayment) - устанавливает способ оплаты.
 
 Класс предоставляет возможность взаимодействия с данными формы.
 
@@ -288,9 +289,12 @@ export type TPayment = 'card' | 'cash' | undefined;
 
 ### Слой презентера
 
-#### Класс AppApi
+#### Класс WebLarekApi
 
 Принимает в конструктор экземпляр класса Api и предоставляет методы реализующие взаимодействие с бэкендом сервиса.
+
+- getCardList(): Promise<ICard[]> - получить данные по всем товарам
+- orderCards(order: IOrder): Promise<IOrderResult> - отправить заказ
 
 ## Взаимодействие компонентов
 
@@ -298,16 +302,7 @@ export type TPayment = 'card' | 'cash' | undefined;
 Взаимодействие осуществляется за счет событий генерируемых с помощью брокера событий и обработчиков этих событий, описанных в `index.ts`
 В `index.ts` сначала создаются экземпляры всех необходимых классов, а затем настраивается обработка событий.
 
-_События, возникающие при взаимодействии пользователя с интерфейсом (генерируются классами, отвечающими за представление)_
 
-- modal:open — открытие модального окна для редактирования данных или подтверждения действия (например, редактирование профиля, добавление товара в корзину и т.д.).
-- modal:close — закрытие модального окна.
-- card:select — выбор карточки товара для просмотра или добавления в корзину (например, класс Page).
-- card:add — добавление товара в корзину (генерируется через модальное окно или интерфейс корзины).
-- card:remove — удаление товара из корзины (генерируется через модальное окно или корзину).
-- cart:submit — переход к оформлению заказа с товарами в корзине (класс Page или CartData).
-- payment:valid — событие для валидации формы оплаты (класс PaymentForm).
-- contacts:valid — событие для валидации формы контактных данных покупателя (класс ContactsForm).
-- payment:submit — подтверждение и сохранение способа оплаты и адреса доставки (класс PaymentForm).
-- contacts:submit — подтверждение и сохранение контактных данных покупателя (класс ContactsForm).
-- order:success — успешное завершение заказа и переход к списку товаров (класс Success).
+
+
+Доку, я допишу после вашей проверки
