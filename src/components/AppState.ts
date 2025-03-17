@@ -20,11 +20,22 @@ export class AppState extends Model<IAppState> {
 		phone: '',
 		payment: '',
 		address: '',
-		total: 0,
-		items: [],
 	};
 	preview: string | null;
 	formErrors: FormErrors = {};
+
+	getOrder() {
+		return {
+			email: this.order.email,
+			phone: this.order.phone,
+			payment: this.order.payment,
+			address: this.order.address,
+		};
+	}
+
+	getIds() {
+		return this.basket.map((item) => item.id);
+	}
 
 	removeBasket(item: ICard) {
 		this.basket = this.basket.filter((card) => card.id !== item.id);
@@ -48,7 +59,7 @@ export class AppState extends Model<IAppState> {
 
 	getTotal() {
 		return this.basket.reduce(
-			(a, c) => a + this.catalog.find((it) => it.id === c.id).price,
+			(a, c) => a + (this.catalog.find((it) => it.id === c.id)?.price || 0),
 			0
 		);
 	}
@@ -69,15 +80,13 @@ export class AppState extends Model<IAppState> {
 			phone: '',
 			payment: '',
 			address: '',
-			total: 0,
-			items: [],
 		};
 		this.emitChanges('order:changed', this.order);
 	}
 
 	setPaymentField(field: keyof IOrderForm, value: string) {
 		this.order[field] = value;
-		this.validatePayment()
+		this.validatePayment();
 		this.events.emit('order:ready');
 	}
 

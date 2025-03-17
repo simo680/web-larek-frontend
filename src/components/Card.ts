@@ -1,6 +1,6 @@
 import { Component } from './base/Component';
 import { ICard } from '../types';
-import { ensureElement } from '../utils/utils';
+import { ensureElement, categoryClasses, Category } from '../utils/utils';
 
 interface ICardActions {
 	onClick: (event: MouseEvent) => void;
@@ -72,16 +72,12 @@ export class Card extends Component<ICard> {
 	set category(value: string) {
 		this.setText(this._category, value);
 
-		const categoryClass =
-			{
-				'софт-скил': 'soft',
-				'другое': 'other',
-				'кнопка': 'button',
-				'хард-скил': 'hard',
-				'дополнительное': 'additional',
-			}[value.toLowerCase()] || '';
+		const categoryEnum = Object.values(Category).find(
+			(category) => category.toLowerCase() === value.toLowerCase()
+		);
 
-		if (categoryClass) {
+		if (categoryEnum) {
+			const categoryClass = categoryClasses[categoryEnum];
 			this._category.classList.add(`card__category_${categoryClass}`);
 		}
 	}

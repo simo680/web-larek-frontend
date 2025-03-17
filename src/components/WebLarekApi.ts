@@ -26,6 +26,7 @@ export class WebLarekApi extends Api implements IWebLarekAPI {
 	}
 
 	orderCards(order: IOrder): Promise<IOrderResult> {
+		console.log(order)
 		return this.post(`/order`, order).then((data: IOrderResult) => data);
 	}
 }

@@ -42,6 +42,12 @@ const basket = new Basket(cloneTemplate(basketTemplate), events);
 const order = new OrderForm(cloneTemplate(orderTemplate), events);
 const contacts = new ContactsForm(cloneTemplate(contactsTemplate), events);
 
+const success = new Success(cloneTemplate(successTemplate), {
+	onClick: () => {
+		modal.close();
+	},
+});
+
 // Дальше идет бизнес-логика
 // Поймали событие, сделали что нужно
 
@@ -62,23 +68,23 @@ events.on<CatalogChangeEvent>('items:changed', () => {
 
 // Отправлена форма заказа
 events.on('contacts:submit', () => {
-	api
-		.orderCards(appData.order)
-		.then((result) => {
-			const success = new Success(cloneTemplate(successTemplate), {
-				onClick: () => {
-					modal.close();
-					appData.clearAllCardsInBasket();
-				},
-			});
+	const payload = {
+		...appData.getOrder(),
+		total: appData.getTotal(),
+		items: appData.getIds(),
+	};
 
+	api
+		.orderCards(payload)
+		.then((result) => {
 			modal.render({
 				content: success.render({
 					total: result.total,
 				}),
 			});
+
 			appData.clearAllCardsInBasket();
-			appData.clearInputs()
+			appData.clearInputs();
 		})
 		.catch((err) => {
 			console.error(err);
@@ -135,7 +141,7 @@ events.on('order:open', () => {
 
 // Открыть форму контактов
 events.on('order:submit', () => {
-	appData.order.items = appData.basket.map((item) => item.id);
+	appData.basket.map((item) => item.id);
 	modal.render({
 		content: contacts.render({
 			phone: '',
@@ -184,15 +190,10 @@ events.on('preview:changed', (item: ICard) => {
 	});
 });
 
-events.on('payment:change', (item: HTMLButtonElement) => {
-	appData.order.payment = item.name;
-	appData.validatePayment();
-});
-
 // Изменилась корзина
 events.on('basket:changed', () => {
 	page.counter = appData.basket.length;
-	
+
 	basket.items = appData.basket.map((item) => {
 		const product = new Card(cloneTemplate(cardBasketTemplate), {
 			onClick: () => {
@@ -205,7 +206,7 @@ events.on('basket:changed', () => {
 		});
 	});
 	basket.total = appData.getTotal();
-	appData.order.total = appData.getTotal();
+	// appData.order.total = appData.getTotal();
 });
 
 // Добавляем товар в корзину

@@ -30,15 +30,11 @@ export interface IOrderForm {
 	address: string;
 }
 
-export interface IOrder extends IContactsForm, IOrderForm {
-	total: number;
-	items: string[];
-}
+export interface IOrder extends IContactsForm, IOrderForm {}
 
 export interface IOrderResult {
 	id: string;
 	total: number;
 }
 
-export type TPayment = 'card' | 'cash' | '';
 export type FormErrors = Partial<Record<keyof IOrder, string>>;
