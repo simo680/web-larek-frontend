@@ -102,10 +102,7 @@ IPaymentForm {
 Интерфейс содержащий данные заказа, включая контактную информацию, способ оплаты и адрес доставки, а также общую сумму и список товаров.
 
 ```
-interface IOrder extends IContactsForm, IOrderForm {
-	total: number;
-	items: string[];
-}
+interface IOrder extends IContactsForm, IOrderForm {}
 ```
 
 Интерфейс с описанием структуры данных для ответа от API после оформления заказа.
@@ -226,7 +223,6 @@ preview: string | null — ID товара, выбранного для пред
 formErrors: FormErrors — объект, содержащий ошибки валидации формы.
 
 Методы:
-
 
 - getOrder(): IOrder
 
